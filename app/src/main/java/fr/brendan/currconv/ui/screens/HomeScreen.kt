@@ -2,6 +2,7 @@ package fr.brendan.currconv.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,12 @@ import androidx.navigation3.runtime.NavEntry
 import fr.brendan.currconv.Currencies
 import fr.brendan.currconv.Currency
 import fr.brendan.currconv.navigation.CurrConvRoutes
+import fr.brendan.currconv.ui.theme.DarkGray
+import fr.brendan.currconv.ui.theme.LightGray
+import fr.brendan.currconv.ui.theme.LightRed
+import fr.brendan.currconv.ui.theme.Orange
+import fr.brendan.currconv.ui.theme.Red
+import fr.brendan.currconv.ui.theme.White
 
 fun homeNavEntry(destination: CurrConvRoutes.Home): NavEntry<CurrConvRoutes> = NavEntry(destination) {
     HomeScreen()
@@ -52,7 +59,6 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8FAFC),
     ) {
         Column(
             modifier = Modifier
@@ -62,15 +68,15 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) { Text(
                         text = "Convertisseur de Devises",
-                        fontSize = 22.sp,
-                        color = Color(0xFF363636)
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
@@ -90,7 +96,7 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
@@ -121,7 +127,7 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
                         CalcButton(content = ButtonContent.Text("1"), type = ButtonType.Number)
                         CalcButton(content = ButtonContent.Text("2"), type = ButtonType.Number)
                         CalcButton(content = ButtonContent.Text("3"), type = ButtonType.Number)
-                        CalcButton(content = ButtonContent.Text("x"), type = ButtonType.Operator)
+                        CalcButton(content = ButtonContent.Text("×"), type = ButtonType.Operator)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -177,13 +183,13 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
             ) {
                 Text(
                     text = "Taux actuel: 1€ = 1600₩ (30/08/2026 20:03)",
-                    fontSize = 15.sp,
-                    color = Color(0xFF363636),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Cliquez pour mettre à jour",
-                    fontSize = 15.sp,
-                    color = Color(0xFF363636),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -196,7 +202,7 @@ private fun CurrencyRow(amount: String, currency: Currency) {
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
-            .background(Color(0xFFF1F5F9), RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
             .padding(16.dp)
             .clickable(enabled = true, onClick = {
                 TODO()
@@ -206,8 +212,8 @@ private fun CurrencyRow(amount: String, currency: Currency) {
     ) {
         Text(
             text = amount,
-            color = Color(0xFF363636),
-            fontSize = 22.sp
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Column(
@@ -219,12 +225,13 @@ private fun CurrencyRow(amount: String, currency: Currency) {
         ) {
             Text(
                 text = currency.flag ?: "❓",
-                color = Color(0xFF363636),
-                fontSize = 22.sp
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = currency.code,
-                color = Color(0xFF363636),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -252,22 +259,22 @@ private fun CalcButton(
             .aspectRatio(1f),
         colors = when(type) {
             is ButtonType.Number -> ButtonColors(
-                containerColor = Color(0xFF919191),
-                contentColor = Color(0xFFFFFFFF),
-                disabledContainerColor = Color(0xFFF3635A),
-                disabledContentColor = Color(0xFFFF0000)
+                containerColor = LightGray,
+                contentColor = White,
+                disabledContainerColor = LightRed,
+                disabledContentColor = Red
             )
             is ButtonType.Action -> ButtonColors(
-                containerColor = Color(0xFFFF9800),
-                contentColor = Color(0xFFFFFFFF),
-                disabledContainerColor = Color(0xFFF3635A),
-                disabledContentColor = Color(0xFFFF0000)
+                containerColor = Orange,
+                contentColor = White,
+                disabledContainerColor = LightRed,
+                disabledContentColor = Red
             )
             is ButtonType.Operator -> ButtonColors(
-                containerColor = Color(0xFF545454),
-                contentColor = Color(0xFFFFFFFF),
-                disabledContainerColor = Color(0xFFF3635A),
-                disabledContentColor = Color(0xFFFF0000)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = White,
+                disabledContainerColor = LightRed,
+                disabledContentColor = Red
             )
         },
         onClick = {
@@ -277,7 +284,8 @@ private fun CalcButton(
         when(content) {
             is ButtonContent.Text -> Text(
                 text = content.value,
-                fontSize = 22.sp
+                style = MaterialTheme.typography.bodyLarge,
+                color = White
             )
             is ButtonContent.Icon -> Icon(
                 imageVector = content.imageVector,
