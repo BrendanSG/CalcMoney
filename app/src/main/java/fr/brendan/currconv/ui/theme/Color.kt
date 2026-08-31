@@ -10,4 +10,5 @@ val UltraDarkGray = Color(0xFF000000)
 
 val LightRed = Color(0xFFF3635A)
 val Red = Color(0xFFFF0000)
+val LightOrange = Color(0xFFFDBD68)
 val Orange = Color(0xFFFF9800)

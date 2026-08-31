@@ -2,7 +2,6 @@ package fr.brendan.currconv.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,30 +29,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavEntry
 import fr.brendan.currconv.Currencies
 import fr.brendan.currconv.Currency
+import fr.brendan.currconv.CurrencyType
 import fr.brendan.currconv.navigation.CurrConvRoutes
-import fr.brendan.currconv.ui.theme.DarkGray
 import fr.brendan.currconv.ui.theme.LightGray
 import fr.brendan.currconv.ui.theme.LightRed
 import fr.brendan.currconv.ui.theme.Orange
 import fr.brendan.currconv.ui.theme.Red
 import fr.brendan.currconv.ui.theme.White
 
-fun homeNavEntry(destination: CurrConvRoutes.Home): NavEntry<CurrConvRoutes> = NavEntry(destination) {
-    HomeScreen()
+fun homeNavEntry(destination: CurrConvRoutes.Home, backStack: SnapshotStateList<CurrConvRoutes>): NavEntry<CurrConvRoutes> = NavEntry(destination) {
+    HomeScreen(backStack = backStack)
 }
 
 @Composable
-@Preview(showBackground = true, device = "id:pixel_7", showSystemUi = true)
-private fun HomeScreen(modifier: Modifier = Modifier) {
+private fun HomeScreen(modifier: Modifier = Modifier, backStack: SnapshotStateList<CurrConvRoutes>) {
     var sourceAmount by remember { mutableStateOf("0.0") }
     var convertedAmount by remember { mutableStateOf("0.0") }
 
@@ -81,12 +78,16 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
                         amount = sourceAmount,
-                        currency = Currencies.KRW
+                        currency = Currencies.KRW,
+                        type = CurrencyType.CurrencySource,
+                        backStack = backStack
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
                         amount = convertedAmount,
-                        currency = Currencies.EUR
+                        currency = Currencies.EUR,
+                        type = CurrencyType.CurrencyDestination,
+                        backStack = backStack
                     )
                 }
             }
@@ -197,7 +198,7 @@ private fun HomeScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CurrencyRow(amount: String, currency: Currency) {
+private fun CurrencyRow(amount: String, currency: Currency, type: CurrencyType, backStack: SnapshotStateList<CurrConvRoutes>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -205,7 +206,7 @@ private fun CurrencyRow(amount: String, currency: Currency) {
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
             .padding(16.dp)
             .clickable(enabled = true, onClick = {
-                TODO()
+                backStack.add(CurrConvRoutes.CurrencySelector(type))
             }),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -217,9 +218,7 @@ private fun CurrencyRow(amount: String, currency: Currency) {
         )
 
         Column(
-            modifier = Modifier.fillMaxHeight().clickable(enabled = true, onClick = {
-                TODO()
-            }),
+            modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
