@@ -19,16 +19,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import fr.brendan.currconv.Currencies
 import fr.brendan.currconv.Currency
 import fr.brendan.currconv.CurrencyType
 import fr.brendan.currconv.navigation.CurrConvRoutes
+import fr.brendan.currconv.ui.CurrencyViewModel
+import fr.brendan.currconv.ui.theme.Green
 import fr.brendan.currconv.ui.theme.LightGray
+import fr.brendan.currconv.ui.theme.White
 
 fun currencySelectorEntry(destination: CurrConvRoutes.CurrencySelector, backStack: SnapshotStateList<CurrConvRoutes>): NavEntry<CurrConvRoutes> = NavEntry(destination) {
     CurrencySelectorScreen(type = destination.type, backStack = backStack)
@@ -38,8 +47,13 @@ fun currencySelectorEntry(destination: CurrConvRoutes.CurrencySelector, backStac
 private fun CurrencySelectorScreen(
     modifier: Modifier = Modifier,
     type: CurrencyType,
-    backStack: SnapshotStateList<CurrConvRoutes>
+    backStack: SnapshotStateList<CurrConvRoutes>,
+    viewModel: CurrencyViewModel = viewModel()
 ) {
+    val sourceCurrencyCode by viewModel.sourceCurrency.collectAsState()
+    val destinationCurrencyCode by viewModel.destinationCurrency.collectAsState()
+    var selectedCurrencyCode by remember { mutableStateOf(if (type == CurrencyType.CurrencySource) sourceCurrencyCode else destinationCurrencyCode) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -64,7 +78,14 @@ private fun CurrencySelectorScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(Currencies.getAll()) { currency ->
-                    CurrencyButton(currency = currency)
+                    val isSelected = selectedCurrencyCode == currency.code
+                    CurrencyButton(
+                        currency = currency,
+                        isSelected = isSelected,
+                        onClick = {
+                            selectedCurrencyCode = currency.code
+                        }
+                    )
                 }
             }
 
@@ -74,8 +95,8 @@ private fun CurrencySelectorScreen(
                     .height(55.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
+                    containerColor = LightGray,
+                    contentColor = White,
                 ),
                 onClick = {
                     backStack.removeLastOrNull()
@@ -95,7 +116,11 @@ private fun CurrencySelectorScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(),
                 onClick = {
-                    TODO()
+                    val originalCurrencyCode = if (type == CurrencyType.CurrencySource) sourceCurrencyCode else destinationCurrencyCode
+                    if (originalCurrencyCode != selectedCurrencyCode) {
+                        viewModel.updateCurrency(type = type, code = selectedCurrencyCode)
+                    }
+                    backStack.removeLastOrNull()
                 }
             ) {
                 Text(
@@ -109,19 +134,22 @@ private fun CurrencySelectorScreen(
 }
 
 @Composable
-private fun CurrencyButton(modifier: Modifier = Modifier, currency: Currency) {
+private fun CurrencyButton(
+    modifier: Modifier = Modifier,
+    currency: Currency,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Button(
         modifier = Modifier.fillMaxWidth(0.85f)
             .height(55.dp)
-            .border(width = 2.dp, color = LightGray, shape = RoundedCornerShape(16.dp)),
+            .border(width = 2.dp, color = if (isSelected) Green else LightGray, shape = RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
-        onClick = {
-            TODO()
-        }
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),

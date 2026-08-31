@@ -62,4 +62,8 @@ dependencies {
 
     implementation(libs.androidx.compose.icons)
     implementation(libs.androidx.compose.iconsext)
+
+    implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.androidx.lifecycle.viewmodel)
 }

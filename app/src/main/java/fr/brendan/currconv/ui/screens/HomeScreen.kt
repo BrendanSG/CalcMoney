@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,11 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import fr.brendan.currconv.Currencies
 import fr.brendan.currconv.Currency
 import fr.brendan.currconv.CurrencyType
 import fr.brendan.currconv.navigation.CurrConvRoutes
+import fr.brendan.currconv.ui.CurrencyViewModel
 import fr.brendan.currconv.ui.theme.LightGray
 import fr.brendan.currconv.ui.theme.LightRed
 import fr.brendan.currconv.ui.theme.Orange
@@ -50,9 +53,15 @@ fun homeNavEntry(destination: CurrConvRoutes.Home, backStack: SnapshotStateList<
 }
 
 @Composable
-private fun HomeScreen(modifier: Modifier = Modifier, backStack: SnapshotStateList<CurrConvRoutes>) {
+private fun HomeScreen(
+    modifier: Modifier = Modifier,
+    backStack: SnapshotStateList<CurrConvRoutes>,
+    viewModel: CurrencyViewModel = viewModel()) {
     var sourceAmount by remember { mutableStateOf("0.0") }
     var convertedAmount by remember { mutableStateOf("0.0") }
+
+    val sourceCurrencyCode by viewModel.sourceCurrency.collectAsState()
+    val destinationCurrencyCode by viewModel.destinationCurrency.collectAsState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -78,14 +87,14 @@ private fun HomeScreen(modifier: Modifier = Modifier, backStack: SnapshotStateLi
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
                         amount = sourceAmount,
-                        currency = Currencies.KRW,
+                        currency = Currencies.findByCode(sourceCurrencyCode),
                         type = CurrencyType.CurrencySource,
                         backStack = backStack
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
                         amount = convertedAmount,
-                        currency = Currencies.EUR,
+                        currency = Currencies.findByCode(destinationCurrencyCode),
                         type = CurrencyType.CurrencyDestination,
                         backStack = backStack
                     )
@@ -198,7 +207,7 @@ private fun HomeScreen(modifier: Modifier = Modifier, backStack: SnapshotStateLi
 }
 
 @Composable
-private fun CurrencyRow(amount: String, currency: Currency, type: CurrencyType, backStack: SnapshotStateList<CurrConvRoutes>) {
+private fun CurrencyRow(amount: String, currency: Currency?, type: CurrencyType, backStack: SnapshotStateList<CurrConvRoutes>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,12 +232,12 @@ private fun CurrencyRow(amount: String, currency: Currency, type: CurrencyType, 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = currency.flag ?: "❓",
+                text = currency?.flag ?: "❓",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = currency.code,
+                text = currency?.code ?: "???",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
