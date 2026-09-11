@@ -28,6 +28,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import fr.brendan.currconv.Currencies
@@ -38,6 +39,8 @@ import fr.brendan.currconv.ui.CurrencyViewModel
 import fr.brendan.currconv.ui.theme.Green
 import fr.brendan.currconv.ui.theme.LightGray
 import fr.brendan.currconv.ui.theme.White
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 fun currencySelectorEntry(destination: CurrConvRoutes.CurrencySelector, backStack: SnapshotStateList<CurrConvRoutes>): NavEntry<CurrConvRoutes> = NavEntry(destination) {
     CurrencySelectorScreen(type = destination.type, backStack = backStack)
@@ -118,7 +121,11 @@ private fun CurrencySelectorScreen(
                 onClick = {
                     val originalCurrencyCode = if (type == CurrencyType.CurrencySource) sourceCurrencyCode else destinationCurrencyCode
                     if (originalCurrencyCode != selectedCurrencyCode) {
-                        viewModel.updateCurrency(type = type, code = selectedCurrencyCode)
+                        viewModel.viewModelScope.launch {
+                            viewModel.updateCurrency(type = type, code = selectedCurrencyCode)
+                            delay(500)
+                            viewModel.fetchRate(invalidate = true)
+                        }
                     }
                     backStack.removeLastOrNull()
                 }

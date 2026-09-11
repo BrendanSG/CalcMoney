@@ -62,6 +62,7 @@ private fun HomeScreen(
 
     val sourceCurrencyCode by viewModel.sourceCurrency.collectAsState()
     val destinationCurrencyCode by viewModel.destinationCurrency.collectAsState()
+    val rate by viewModel.cachedRate.collectAsState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -188,11 +189,13 @@ private fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().clickable(enabled = true, onClick = {
+                    viewModel.fetchRate(invalidate = true)
+                }),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Taux actuel: 1€ = 1600₩ (30/08/2026 20:03)",
+                    text = "Taux actuel: $rate",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
