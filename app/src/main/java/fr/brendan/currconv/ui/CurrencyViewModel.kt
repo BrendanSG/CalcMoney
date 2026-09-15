@@ -9,13 +9,16 @@ import fr.brendan.currconv.Currencies
 import fr.brendan.currconv.CurrencyPreferences
 import fr.brendan.currconv.CurrencyRate
 import fr.brendan.currconv.CurrencyType
+import fr.brendan.currconv.ui.components.ButtonAction
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -123,6 +126,100 @@ class CurrencyViewModel(application: Application) : AndroidViewModel(application
             }
         } finally {
             connection.disconnect()
+        }
+    }
+    var operandA = MutableStateFlow("0")
+    var operandB = MutableStateFlow("0")
+    var typingState = MutableStateFlow(0) // 0=A, 1=B, 2=Clear on next type
+    var typingDecimal = MutableStateFlow(false)
+    var currentOperator = MutableStateFlow<ButtonAction.Operator?>(null)
+    fun onKeypadAction(action: ButtonAction) {
+        when (action) {
+            // Numbers
+            is ButtonAction.Number -> {
+                val theOperand = if (typingState.value == 1) operandB else operandA
+                theOperand.update { old ->
+                    if (old == "0" || typingState.value == 2) {
+                        if (typingState.value == 2) {
+                            typingState.update { old ->
+                                if (old == 2) 0 else 1
+                            }
+                        }
+                        action.value.toString()
+                    } else if (old.contains(".") && old.split(".")[1].length >= 2) {
+                        old
+                    } else {
+                        old + action.value.toString()
+                    }
+                }
+            }
+            // Operators: Comma
+            is ButtonAction.Operator.Comma -> {
+                typingDecimal.update { true }
+
+                val theOperand = if (typingState.value == 1) operandB else operandA
+                theOperand.update { old ->
+                    if (old.contains(".")) old else "$old."
+                }
+            }
+            // Operators: All others operators
+            is ButtonAction.Operator -> {
+                if (currentOperator.value == action) {
+                    operandB.update { "0" }
+                    typingState.update { 2 }
+                    currentOperator.update { null }
+                } else {
+                    typingState.update { 1 }
+                    currentOperator.update { action }
+                }
+            }
+            // Others
+            is ButtonAction.Others.Clear -> {
+                operandA.update { "0" }
+                operandB.update { "0" }
+                typingDecimal.update { false }
+                typingState.update { 0 }
+                currentOperator.update { null }
+            }
+            is ButtonAction.Others.Del -> {
+                val theOperand = if (typingState.value == 1) operandB else operandA
+                theOperand.update { old ->
+                    if (old.length <= 1) {
+                        typingDecimal.update { false }
+                        "0"
+                    } else {
+                        val new = old.dropLast(1)
+                        if (!new.contains(".")) {
+                            typingDecimal.update { false }
+                        }
+                        new
+                    }
+                }
+            }
+            is ButtonAction.Others.Equals -> {
+                val numA = operandA.value.toDoubleOrNull()
+                val numB = operandB.value.toDoubleOrNull()
+                if (numA == null || numB == null) return
+
+                var result: Double
+                when (currentOperator.value) {
+                    ButtonAction.Operator.Add -> result = numA + numB
+                    ButtonAction.Operator.Sub -> result = numA - numB
+                    ButtonAction.Operator.Multiply -> result = numA * numB
+                    ButtonAction.Operator.Divide -> {
+                        if (numB == 0.0) throw IllegalArgumentException("Dividing by 0 is forbidden")
+                        result = numA / numB
+                    }
+                    else -> return
+                }
+
+                Log.d("CurrencyViewModel", "Calculi result: $numA (${currentOperator.value}) $numB = $result")
+                operandA.update { result.toString() }
+                operandB.update { "0" }
+                typingState.update { 2 }
+                currentOperator.update { null }
+            }
+            is ButtonAction.Others.Swap -> TODO()
         }
     }
 }

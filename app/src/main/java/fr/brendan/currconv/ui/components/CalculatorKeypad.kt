@@ -21,18 +21,28 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.brendan.currconv.ui.CurrencyViewModel
 import fr.brendan.currconv.ui.theme.LightGray
+import fr.brendan.currconv.ui.theme.LightOrange
 import fr.brendan.currconv.ui.theme.LightRed
 import fr.brendan.currconv.ui.theme.Orange
-import fr.brendan.currconv.ui.theme.Red
 import fr.brendan.currconv.ui.theme.White
 
 @Composable
-fun CalculatorKeypad(modifier: Modifier = Modifier) {
+fun CalculatorKeypad(
+    modifier: Modifier = Modifier,
+    onAction: (ButtonAction) -> Unit,
+    viewModel: CurrencyViewModel = viewModel()
+) {
+    val currentOperator by viewModel.currentOperator.collectAsState()
+    val operandB by viewModel.operandB.collectAsState()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -50,10 +60,10 @@ fun CalculatorKeypad(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CalcButton(content = ButtonContent.Text("C"), type = ButtonType.Action)
-                CalcButton(content = ButtonContent.Icon(Icons.AutoMirrored.Filled.Backspace, "Del"), type = ButtonType.Action)
-                CalcButton(content = ButtonContent.Icon(Icons.Filled.SwapVert, "Swap"), type = ButtonType.Action)
-                CalcButton(content = ButtonContent.Text("÷"), type = ButtonType.Operator)
+                CalcButton(action = ButtonAction.Others.Clear, onAction = onAction)
+                CalcButton(action = ButtonAction.Others.Del, onAction = onAction)
+                CalcButton(action = ButtonAction.Others.Swap, onAction = onAction, enabled = false)
+                CalcButton(action = ButtonAction.Operator.Divide, onAction = onAction, selected = currentOperator == ButtonAction.Operator.Divide)
             }
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -64,10 +74,10 @@ fun CalculatorKeypad(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CalcButton(content = ButtonContent.Text("1"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("2"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("3"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("×"), type = ButtonType.Operator)
+                CalcButton(action = ButtonAction.Number(1), onAction = onAction)
+                CalcButton(action = ButtonAction.Number(2), onAction = onAction)
+                CalcButton(action = ButtonAction.Number(3), onAction = onAction)
+                CalcButton(action = ButtonAction.Operator.Multiply, onAction = onAction, selected = currentOperator == ButtonAction.Operator.Multiply)
             }
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -78,10 +88,10 @@ fun CalculatorKeypad(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CalcButton(content = ButtonContent.Text("4"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("5"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("6"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("+"), type = ButtonType.Operator)
+                CalcButton(action = ButtonAction.Number(4), onAction = onAction)
+                CalcButton(action = ButtonAction.Number(5), onAction = onAction)
+                CalcButton(action = ButtonAction.Number(6), onAction = onAction)
+                CalcButton(action = ButtonAction.Operator.Add, onAction = onAction, selected = currentOperator == ButtonAction.Operator.Add)
             }
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -92,10 +102,10 @@ fun CalculatorKeypad(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CalcButton(content = ButtonContent.Text("7"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("8"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("9"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("-"), type = ButtonType.Operator)
+                CalcButton(action = ButtonAction.Number(7), onAction = onAction)
+                CalcButton(action = ButtonAction.Number(8), onAction = onAction)
+                CalcButton(action = ButtonAction.Number(9), onAction = onAction)
+                CalcButton(action = ButtonAction.Operator.Sub, onAction = onAction, selected = currentOperator == ButtonAction.Operator.Sub)
             }
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -106,69 +116,117 @@ fun CalculatorKeypad(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CalcButton(content = ButtonContent.Text("C"), type = ButtonType.Action)
-                CalcButton(content = ButtonContent.Text("0"), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text(","), type = ButtonType.Number)
-                CalcButton(content = ButtonContent.Text("="), type = ButtonType.Action)
+                CalcButton(action = ButtonAction.Others.Clear, onAction = onAction)
+                CalcButton(action = ButtonAction.Number(0), onAction = onAction)
+                CalcButton(action = ButtonAction.Operator.Comma, onAction = onAction)
+                CalcButton(action = ButtonAction.Others.Equals, onAction = onAction, enabled = (currentOperator != ButtonAction.Operator.Divide || operandB.toDoubleOrNull() != 0.0))
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
-sealed interface ButtonContent {
-    data class Text(val value: String): ButtonContent
-    data class Icon(val imageVector: ImageVector, val contentDescription: String): ButtonContent
-}
+sealed class ButtonAction {
+    // 0 1 2 3 4 5 6 7 8 9
+    data class Number(val value: Int) : ButtonAction()
 
-sealed interface ButtonType {
-    data object Number: ButtonType
-    data object Action: ButtonType
-    data object Operator: ButtonType
+    // + - × ÷
+    sealed class Operator : ButtonAction() {
+        object Add : Operator()
+        object Sub : Operator()
+        object Multiply : Operator()
+        object Divide : Operator()
+        object Comma : Operator()
+
+        override fun toString(): String {
+            return this.javaClass.simpleName
+        }
+    }
+
+    // Clear, Del, Swap, Equals
+    sealed class Others : ButtonAction() {
+        object Clear : Others()
+        object Del : Others()
+        object Equals : Others()
+        object Swap : Others()
+    }
 }
 
 @Composable
 private fun CalcButton(
-    content: ButtonContent,
-    type: ButtonType
+    action: ButtonAction,
+    enabled: Boolean = true,
+    onAction: (ButtonAction) -> Unit,
+    selected: Boolean = false
 ) {
+
     Button(
         modifier = Modifier
             .fillMaxHeight()
             .aspectRatio(1f),
-        colors = when(type) {
-            is ButtonType.Number -> ButtonColors(
+        colors = when(action) {
+            is ButtonAction.Number -> ButtonColors(
                 containerColor = LightGray,
                 contentColor = White,
                 disabledContainerColor = LightRed,
-                disabledContentColor = Red
+                disabledContentColor = White
             )
-            is ButtonType.Action -> ButtonColors(
+            is ButtonAction.Operator -> ButtonColors(
+                containerColor = if (selected) LightOrange else MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = White,
+                disabledContainerColor = LightRed,
+                disabledContentColor = White
+            )
+            is ButtonAction.Others -> ButtonColors(
                 containerColor = Orange,
                 contentColor = White,
                 disabledContainerColor = LightRed,
-                disabledContentColor = Red
-            )
-            is ButtonType.Operator -> ButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = White,
-                disabledContainerColor = LightRed,
-                disabledContentColor = Red
+                disabledContentColor = White
             )
         },
         onClick = {
-            TODO()
-        }
+            if (!enabled) return@Button
+            onAction(action)
+        },
+        enabled = enabled
     ) {
-        when(content) {
-            is ButtonContent.Text -> Text(
-                text = content.value,
+        when(action) {
+            // Numbers
+            is ButtonAction.Number -> Text(
+                text = action.value.toString(),
                 style = MaterialTheme.typography.bodyLarge,
                 color = White
             )
-            is ButtonContent.Icon -> Icon(
-                imageVector = content.imageVector,
-                contentDescription = content.contentDescription
+            // Operators
+            is ButtonAction.Operator -> Text(
+                text = when(action) {
+                    is ButtonAction.Operator.Add -> "+"
+                    is ButtonAction.Operator.Sub -> "-"
+                    is ButtonAction.Operator.Multiply -> "×"
+                    is ButtonAction.Operator.Divide -> "÷"
+                    is ButtonAction.Operator.Comma -> ","
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = White
+            )
+            // Others
+            is ButtonAction.Others.Clear -> Text(
+                text = "C",
+                style = MaterialTheme.typography.bodyLarge,
+                color = White
+            )
+            is ButtonAction.Others.Del -> Icon(
+                imageVector = Icons.AutoMirrored.Filled.Backspace,
+                contentDescription = "Del"
+            )
+            is ButtonAction.Others.Swap -> Icon(
+                imageVector = Icons.Filled.SwapVert,
+                contentDescription = "Swap"
+            )
+            is ButtonAction.Others.Equals -> Text(
+                text = "=",
+                style = MaterialTheme.typography.bodyLarge,
+                color = White
             )
         }
     }

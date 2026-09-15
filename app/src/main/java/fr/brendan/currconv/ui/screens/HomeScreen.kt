@@ -16,9 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,12 +38,20 @@ private fun HomeScreen(
     modifier: Modifier = Modifier,
     backStack: SnapshotStateList<CurrConvRoutes>,
     viewModel: CurrencyViewModel = viewModel()) {
-    var sourceAmount by remember { mutableStateOf("0.0") }
-    var convertedAmount by remember { mutableStateOf("0.0") }
-
     val sourceCurrencyCode by viewModel.sourceCurrency.collectAsState()
     val destinationCurrencyCode by viewModel.destinationCurrency.collectAsState()
     val rate by viewModel.cachedRate.collectAsState()
+
+    val operandA by viewModel.operandA.collectAsState()
+    val operandB by viewModel.operandB.collectAsState()
+    val typingState by viewModel.typingState.collectAsState()
+    val typingOperand = if (typingState == 1) operandB else operandA
+
+    val sourceAmountToShow =
+        if (typingOperand.contains("."))
+            "%,.2f".format(typingOperand.toDoubleOrNull() ?: 0.0)
+        else
+            "%,d".format(typingOperand.toIntOrNull() ?: 0)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -71,14 +76,14 @@ private fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
-                        amount = sourceAmount,
+                        amount = sourceAmountToShow,
                         currency = Currencies.findByCode(sourceCurrencyCode),
                         type = CurrencyType.CurrencySource,
                         backStack = backStack
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
-                        amount = convertedAmount,
+                        amount = "?",
                         currency = Currencies.findByCode(destinationCurrencyCode),
                         type = CurrencyType.CurrencyDestination,
                         backStack = backStack
@@ -87,7 +92,9 @@ private fun HomeScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            CalculatorKeypad()
+            CalculatorKeypad(onAction = { action ->
+                viewModel.onKeypadAction(action)
+            })
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(
