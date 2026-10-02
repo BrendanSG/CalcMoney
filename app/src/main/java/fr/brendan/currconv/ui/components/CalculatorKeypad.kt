@@ -62,7 +62,7 @@ fun CalculatorKeypad(
             ) {
                 CalcButton(action = ButtonAction.Others.Clear, onAction = onAction)
                 CalcButton(action = ButtonAction.Others.Del, onAction = onAction)
-                CalcButton(action = ButtonAction.Others.Swap, onAction = onAction, enabled = false)
+                CalcButton(action = ButtonAction.Others.Swap, onAction = onAction)
                 CalcButton(action = ButtonAction.Operator.Divide, onAction = onAction, selected = currentOperator == ButtonAction.Operator.Divide)
             }
             Spacer(modifier = Modifier.height(8.dp))

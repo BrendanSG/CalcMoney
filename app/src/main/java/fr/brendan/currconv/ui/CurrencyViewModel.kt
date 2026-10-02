@@ -219,7 +219,14 @@ class CurrencyViewModel(application: Application) : AndroidViewModel(application
                 typingState.update { 2 }
                 currentOperator.update { null }
             }
-            is ButtonAction.Others.Swap -> TODO()
+            is ButtonAction.Others.Swap -> {
+                viewModelScope.launch {
+                    val oldSource = sourceCurrency.value
+                    val oldDestination = destinationCurrency.value
+                    updateCurrency(type = CurrencyType.CurrencySource, code = oldDestination)
+                    updateCurrency(type = CurrencyType.CurrencyDestination, code = oldSource)
+                }
+            }
         }
     }
 }

@@ -52,6 +52,7 @@ private fun HomeScreen(
             "%,.2f".format(typingOperand.toDoubleOrNull() ?: 0.0)
         else
             "%,d".format(typingOperand.toIntOrNull() ?: 0)
+    val destAmount = (operandA.toDoubleOrNull() ?: 0.0) * (rate?.rate ?: 0).toDouble()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -83,7 +84,7 @@ private fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     CurrencyRow(
-                        amount = "?",
+                        amount = if (typingState == 1) "?" else "%,.2f".format(destAmount),
                         currency = Currencies.findByCode(destinationCurrencyCode),
                         type = CurrencyType.CurrencyDestination,
                         backStack = backStack
