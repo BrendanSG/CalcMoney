@@ -1,3 +1,6 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -12,11 +15,17 @@ android {
     }
 
     defaultConfig {
+        val versionNameProp = (project.findProperty("VERSION_NAME") as? String) ?: "debug"
+        val versionCodeProp = (project.findProperty("VERSION_CODE") as? String)?.toInt() ?: 1
+
         applicationId = "fr.brendan.currconv"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionName = versionNameProp
+        versionCode = versionCodeProp
+
+        println("--> Build Version Name: $versionName")
+        println("--> Build Version Code: $versionCode")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
