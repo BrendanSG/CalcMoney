@@ -31,7 +31,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["appName"] = "[DEBUG] CalcMoney"
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
+            manifestPlaceholders["appName"] = "CalcMoney"
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
