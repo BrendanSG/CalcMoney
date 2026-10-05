@@ -43,10 +43,32 @@ jobs:
       - name: Build APK with Gradle
         run: ./gradlew assembleRelease -PVERSION_NAME="${{ env.VERSION_NAME }}" -PVERSION_CODE="${{ env.VERSION_CODE }}"
 
-      - name: Rename APK file
+      - name: Sign Android APK
         run: |
-          mkdir -p dist/
-          cp app/build/outputs/apk/release/app-release*.apk "dist/calcmoney-${{ github.ref_name }}.apk"
+          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > calcmoney-key.jks
+          
+          APK_PATH=$(find app/build/outputs/apk/release/app-release*.apk | head -n 1)
+          echo "--> APK located at $APK_PATH"
+          
+          # Retrieve latest Android BuildTools installed
+          echo "--> ANDROID_HOME=$ANDROID_HOME"
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
+          echo "--> Using build-tools at: $BUILD_TOOLS_DIR"
+          
+          # Align APK (output file at working dir)
+          $BUILD_TOOLS_DIR/zipalign -v 4 "$APK_PATH" calcmoney-aligned.apk
+          
+          # Sign APK (output file at working dir)
+          $BUILD_TOOLS_DIR/apksigner sign \
+            --ks calcmoney-key.jks \
+            --ks-key-alias "${{ secrets.ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out calcmoney-${{ github.ref_name }}.apk \
+            calcmoney-aligned.apk
+          
+          rm calcmoney-key.jks
+          rm calcmoney-aligned.apk
 
       - name: Generate Changelog
         run: |
@@ -67,7 +89,7 @@ jobs:
       - name: Create GitHub Release and Upload APK
         uses: softprops/action-gh-release@v3
         with:
-          files: dist/calcmoney-*.apk
+          files: calcmoney-*.apk
           name: Release ${{ github.ref_name }}
           body: |
             ### What's new ?
